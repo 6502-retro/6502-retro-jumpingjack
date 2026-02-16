@@ -387,12 +387,15 @@ game_loop:
     jmp game_loop           ; loop
 
 ; =============================================================================
-;               PROCESS KEYBOARD INPUT
+;               PROCESS JOYSTICK AND KEYBOARD INPUT
 ; =============================================================================
 
 key:
     lda attract_flag
     beq :++
+    lda IOJOY
+    cmp #JOY_FIRE
+    beq :+
     jsr bios_const
     bcc @next
     cmp #$1b
@@ -405,11 +408,12 @@ key:
     bcc :+                  ; else
     jmp game_loop           ; loop
 :   jsr bios_const
-    bcc @next
+    bcc :+
     cmp #$1b
     bne :+
     jmp bios_wboot
-:   cmp #'s'
+:   lda IOJOY
+    cmp #JOY_RELEASED
     bne :+
     lda jstate
     cmp #jstate::still
@@ -420,16 +424,20 @@ key:
     lda #4
     sta jsprite + sprite::pa
     jmp game_loop
-:   cmp #' '
-    bne :+
+:   eor #$FF
+    sta joystatus
+    and #JOY_MAP_FIRE
+    beq :+
     jmp do_jump             ; process jump
-:   cmp #'a'
-    bne :+
+:   lda joystatus
+    and #JOY_MAP_LEFT
+    beq :+
     lda #jstate::left       ; YES? set state to running left.
     sta jstate
     jmp game_loop           ; loop
-:   cmp #'d'
-    bne @next
+:   lda joystatus
+    and #JOY_MAP_RIGHT
+    beq @next
     lda #jstate::right      ; set state to still
     sta jstate
 @next:
@@ -1366,7 +1374,7 @@ jump_note_ctr:  .byte $0  ; counter of notes for jumping and falling.
 attract_flag: .byte 1
 lives:  .byte 4
 game_over_flag: .byte 0
-
+joystatus: .byte 0
 
 jsprite: .tag sprite
 .byte $d0      ; end of sprites marker
@@ -1375,7 +1383,7 @@ score:  .res 3, 0   ; score in BCD format, takes up 3 bytes
 
 .rodata
 ; strings
-space_to_start: .asciiz "UART: SPACE to start"
+space_to_start: .asciiz "UART: FIRE to start"
 you_win:        .asciiz "You Win!"
 jumping_jack:   .asciiz "Jumping Jack"
 by_pd:          .asciiz "By Productiondave"

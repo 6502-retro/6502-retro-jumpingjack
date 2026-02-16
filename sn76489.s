@@ -2,6 +2,7 @@
 ; Library functions for basic control of the SN76489 attached to the VIA
 
 .include "io.inc"
+.include "bios.inc"
 .export sn_start, sn_stop, sn_silence, sn_note, sn_play_note, sn_send, sn_noise
 
 FIRST   = %10000000
@@ -15,13 +16,6 @@ VOL     = %00010000
 VOL_OFF = %00001111
 VOL_MAX = %00000000
 
-SD_SCK  = %00000001
-SD_CS   = %00000010
-SN_WE   = %00000100
-SN_READY= %00001000
-SD_MOSI = %10000000
-
-_notectr = $257
 
 .zeropage
 
@@ -57,7 +51,7 @@ sn_noise:
 sn_note:
     jsr sn_play_note
     lda #$02
-    sta _notectr
+    sta bios_notectr
     rts
 
 sn_play_note:
